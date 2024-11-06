@@ -35,6 +35,7 @@ llm = ChatOpenAI(temperature=0, model_name="gpt-4")
 with open("archivos/video_processed.txt", "r", encoding="utf-8") as file:
     lines = file.read()
 
+
 ###########
 ## Grafo ##
 ###########
@@ -42,32 +43,36 @@ with open("archivos/video_processed.txt", "r", encoding="utf-8") as file:
 # documentos
 documents = [Document(page_content=lines)]
 
-# inicializar LLMGraphTransformer 
+# Initialize LLMGraphTransformer and create graph documents
 graph_transformer = LLMGraphTransformer(llm=llm)
+graph_documents = graph_transformer.convert_to_graph_documents(documents)
 
-# generar el grafo a partir de los documentos
-graph = graph_transformer.convert_to_graph_documents(documents)
+print(f"Nodes:{graph_documents[0].nodes}")
+print(f"Relationships:{graph_documents[0].relationships}")
 
-# grafo networkx
+# Create a NetworkX graph and add nodes and edges with content
 nx_graph = nx.Graph()
 
-# nodos
-for node in graph[0].nodes:
-    node_id = dict(node)['id']
-    if node_id:  # Ensure the node has a valid ID
-        nx_graph.add_node(node_id)
-        
-# aristas
-for edge in graph[0].relationships:
-    source = dict(dict(edge)['source'])['id']
-    target = dict(dict(edge)['target'])['id']
-    #attributes = dict(dict(edge))['type']
-    if source and target:
-        nx_graph.add_edge(source, target)#, **attributes)
+# Loop through graph_documents to add nodes and edges with 'content'
+for doc in graph_documents:
+    for node in doc.nodes:
+        node_id = dict(node)["id"]  # Access 'id' directly
+        content = dict(node)["type"]  # Access 'content' directly
+        #attributes = dict()#dict(node)["attributes"]  # Access 'attributes' directly
+        #attributes["content"] = content  # Ensure 'content' is stored in attributes
+        nx_graph.add_node(node_id, content=content)
 
+for doc in graph_documents:    
+    for edge in doc.relationships:
+        edge_dict = vars(edge) if not isinstance(edge, dict) else edge  # Convert to dict if necessary
+        source = str(dict(edge_dict["source"])["id"])  # Convert source to string
+        target = str(dict(edge_dict["target"])["id"])  # Convert target to string
+        print(source,target)
+        tipo = edge_dict["type"]
+        nx_graph.add_edge(source, target, content=tipo)
 
-# guardamos en json
-data = nx.node_link_data(nx_graph)  # Convert to dictionary format suitable for JSON
+# Save the graph with nodes and edges to JSON
+data = nx.node_link_data(nx_graph)
 with open("archivos/saved_graph.json", "w") as file:
     json.dump(data, file)
 
