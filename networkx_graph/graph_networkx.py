@@ -7,7 +7,8 @@ Created on Wed Nov  6 11:00:25 2024
 
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+#from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 import networkx as nx
@@ -35,7 +36,6 @@ llm = ChatOpenAI(temperature=0, model_name="gpt-4")
 with open("archivos/video_processed.txt", "r", encoding="utf-8") as file:
     lines = file.read()
 
-
 ###########
 ## Grafo ##
 ###########
@@ -47,8 +47,8 @@ documents = [Document(page_content=lines)]
 graph_transformer = LLMGraphTransformer(llm=llm)
 graph_documents = graph_transformer.convert_to_graph_documents(documents)
 
-print(f"Nodes:{graph_documents[0].nodes}")
-print(f"Relationships:{graph_documents[0].relationships}")
+#print(f"Nodes:{graph_documents[0].nodes}")
+#print(f"Relationships:{graph_documents[0].relationships}")
 
 # Create a NetworkX graph and add nodes and edges with content
 nx_graph = nx.Graph()

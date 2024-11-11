@@ -52,6 +52,7 @@ for node_id, node_data in nx_graph.nodes(data=True):
         embedding = response['data'][0]['embedding']
         node_embeddings[node_id] = np.array(embedding)  # Store as a numpy array
 
+print(nx_graph.nodes(data=True))
 ##################
 ## VECTOR STORE ##
 ##################   
@@ -85,7 +86,7 @@ def rag_query(query, top_k=5):
         # Step 1: Generate an embedding for the query using OpenAI's API
         response = openai.Embedding.create(
             input=query,
-            model="text-embedding-ada-002"
+            model="text-embedding-3-small"
         )
         query_embedding = np.array(response['data'][0]['embedding']).astype("float32")
     except Exception as e:
@@ -117,7 +118,7 @@ def rag_query(query, top_k=5):
     try:
         # Step 4: Use the LLM to answer the query based on the retrieved context
         messages = [
-            {"role": "system", "content": "You are an expert assistant."},
+            {"role": "system", "content": "Eres una especialista en las fiestas de Paucartambo"},
             {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"}
         ]
 
@@ -125,7 +126,8 @@ def rag_query(query, top_k=5):
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=messages,
-            max_tokens=150
+            max_tokens=150,
+            temperature=0
         )
         answer = response.choices[0].message['content'].strip()
 
@@ -136,7 +138,7 @@ def rag_query(query, top_k=5):
     return answer
 
 # Example usage
-response = rag_query("Qué es la danza Chunchada?")
+response = rag_query("Quienes participan de la Danza Siklla?")
 print(response)
 
 
