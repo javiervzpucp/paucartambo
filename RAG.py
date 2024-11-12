@@ -12,6 +12,10 @@ import numpy as np
 import openai
 import os
 from dotenv import load_dotenv
+#from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.chat_models import ChatOpenAI
+from langchain_openai.embeddings import OpenAIEmbeddings  # Updated import path
+
 
 ###########
 ## GRAFO ##
@@ -34,8 +38,8 @@ load_dotenv()
 # Acceder a la clave API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Initialize the language model for answer generation
-#llm = ChatOpenAI(model_name="gpt-4")
+# Initialize the embeddings model
+embeddings_model = OpenAIEmbeddings()
 
 # Initialize a dictionary to store embeddings
 node_embeddings = {}
@@ -45,11 +49,10 @@ for node_id, node_data in nx_graph.nodes(data=True):
     content = node_data.get("content", "")  # Assuming each node has a 'content' field
     if content:
         # Generate embedding using OpenAI's API
-        response = openai.Embedding.create(
-            input=content,
-            model="text-embedding-ada-002"  # Replace with appropriate embedding model
+        response = embeddings_model.embed_query(
+            content  # Replace with appropriate embedding model
         )
-        embedding = response['data'][0]['embedding']
+        embedding = np.array(response)#response['data'][0]['embedding']
         node_embeddings[node_id] = np.array(embedding)  # Store as a numpy array
 
 print(nx_graph.nodes(data=True))
@@ -81,14 +84,13 @@ print("FAISS index created successfully with {} embeddings.".format(index.ntotal
 ## RAG ##
 #########
 
+# Initialize the LLM model for response generation
+llm = ChatOpenAI(model_name="gpt-4")
+
 def rag_query(query, top_k=5):
     try:
-        # Step 1: Generate an embedding for the query using OpenAI's API
-        response = openai.Embedding.create(
-            input=query,
-            model="text-embedding-3-small"
-        )
-        query_embedding = np.array(response['data'][0]['embedding']).astype("float32")
+        # Step 1: Generate an embedding for the query using the updated OpenAIEmbeddings
+        query_embedding = embeddings_model.embed_query(query)  # Directly pass the query text
     except Exception as e:
         print(f"Error generating embedding for query: {e}")
         return None
@@ -116,20 +118,11 @@ def rag_query(query, top_k=5):
         return None
 
     try:
-        # Step 4: Use the LLM to answer the query based on the retrieved context
-        messages = [
-            {"role": "system", "content": "Eres una especialista en las fiestas de Paucartambo"},
-            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"}
-        ]
-
-        # Use OpenAI ChatCompletion API to generate response
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=150,
-            temperature=0
-        )
-        answer = response.choices[0].message['content'].strip()
+        # Step 4: Use the LLM (ChatOpenAI) to answer the query based on the retrieved context
+        prompt = f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"
+        
+        # Generate response using ChatOpenAI
+        answer = llm(prompt)
 
     except Exception as e:
         print(f"Error generating response from LLM: {e}")
