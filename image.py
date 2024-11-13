@@ -23,9 +23,9 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
 # Loading dataset
-dataset_path =  "imagenes.csv"
+dataset_path =  "imagenes/imagenes.csv"
 df = pd.read_csv(dataset_path,delimiter=';')
-print(df.head())
+print(df)
 
 system_prompt = '''
     Eres un agente especializado en etiquetar imágenes de escenas culturales y rituales andinas con palabras clave relevantes basadas en festividades tradicionales andinas, especialmente la celebración de la Mamacha Carmen en Paucartambo.
