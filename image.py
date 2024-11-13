@@ -74,7 +74,7 @@ def analyze_image(img_url, title):
 
     return response.choices[0].message.content
 
-examples = df.iloc[:1]
+examples = df.iloc[:2]
 print(examples)
 
 for index, ex in examples.iterrows():
